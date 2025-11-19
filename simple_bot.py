@@ -19,26 +19,52 @@ print("DEBUG BOT_TOKEN EXISTS:", "BOT_TOKEN" in os.environ)
 print("DEBUG BOT_TOKEN VALUE:", BOT_TOKEN)
 
 
-# --- 2. ФУНКЦИЯ ЧТЕНИЯ БАЗЫ ДАННЫХ ---
+# --- 2. ФУНКЦИЯ ЧТЕНИЯ БАЗЫ ДАННЫХ (Бронебойная версия) ---
 def load_data():
     print("🔄 Пытаюсь открыть файл data.csv...")
     try:
-        # Если будут кракозябры, поменяй encoding='utf-8' на encoding='cp1251'
-        df = pd.read_csv('data.csv', encoding='utf-8', sep=None, engine='python')
-        
+        # 1. Читаем файл. Явно указываем разделитель ";" и кодировку
+        # header=0 означает, что первая строка - это заголовки (мы их пропустим)
+        try:
+            df = pd.read_csv('data.csv', encoding='utf-8', sep=';', header=None, engine='python')
+        except UnicodeDecodeError:
+            print("⚠️ UTF-8 не подошел, пробую Windows-1251...")
+            df = pd.read_csv('data.csv', encoding='cp1251', sep=';', header=None, engine='python')
+
         data_dict = {}
+        
+        # Перебираем строки
         for index, row in df.iterrows():
+            # Если это первая строка с заголовками (trigger, text, image) — пропускаем её
+            # Проверяем просто: если в первой ячейке написано "trigger" или "триггер"
+            first_cell = str(row[0]).lower().strip()
+            if "trigger" in first_cell or "триггер" in first_cell or "команда" in first_cell:
+                continue
+
+            # Чистим данные от пробелов
             trigger = str(row[0]).strip() 
+            text = str(row[1]).strip()
+            
+            # Проверка на картинку (если ячейка пустая, ставим None)
+            if pd.isna(row[2]) or str(row[2]).strip() == "":
+                image = None
+            else:
+                image = str(row[2]).strip()
+
+            # Записываем в базу
             data_dict[trigger] = {
-                "text": str(row[1]),
-                "image": str(row[2]) if pd.notna(row[2]) else None
+                "text": text,
+                "image": image
             }
+            
         print(f"✅ Успех! Загружено {len(data_dict)} карт.")
+        # Для проверки выведем список загруженных команд в консоль
+        print(f"📜 Список команд: {list(data_dict.keys())}")
         return data_dict
+
     except Exception as e:
         print(f"❌ ОШИБКА чтения файла: {e}")
         return {}
-
 responses = load_data()
 
 # --- 3. ИНИЦИАЛИЗАЦИЯ БОТА ---
@@ -112,3 +138,4 @@ async def main():
 if __name__ == "__main__":
 
     asyncio.run(main())
+
