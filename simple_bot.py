@@ -18,48 +18,42 @@ print("DEBUG ENV KEYS:", list(os.environ.keys()))
 print("DEBUG BOT_TOKEN EXISTS:", "BOT_TOKEN" in os.environ)
 print("DEBUG BOT_TOKEN VALUE:", BOT_TOKEN)
 
-
-# --- 2. ФУНКЦИЯ ЧТЕНИЯ БАЗЫ ДАННЫХ (Бронебойная версия) ---
+# --- 2. ФУНКЦИЯ ЧТЕНИЯ БАЗЫ ДАННЫХ (Специально для твоего формата) ---
 def load_data():
     print("🔄 Пытаюсь открыть файл data.csv...")
     try:
-        # 1. Читаем файл. Явно указываем разделитель ";" и кодировку
-        # header=0 означает, что первая строка - это заголовки (мы их пропустим)
-        try:
-            df = pd.read_csv('data.csv', encoding='utf-8', sep=';', header=None, engine='python')
-        except UnicodeDecodeError:
-            print("⚠️ UTF-8 не подошел, пробую Windows-1251...")
-            df = pd.read_csv('data.csv', encoding='cp1251', sep=';', header=None, engine='python')
-
+        # encoding='utf-8-sig' — удаляет невидимый символ в начале файла
+        # sep=';' — жестко говорим, что разделитель точка с запятой
+        df = pd.read_csv('data.csv', encoding='utf-8-sig', sep=';', header=None, engine='python')
+        
         data_dict = {}
         
-        # Перебираем строки
         for index, row in df.iterrows():
-            # Если это первая строка с заголовками (trigger, text, image) — пропускаем её
-            # Проверяем просто: если в первой ячейке написано "trigger" или "триггер"
-            first_cell = str(row[0]).lower().strip()
-            if "trigger" in first_cell or "триггер" in first_cell or "команда" in first_cell:
+            # Берем данные из колонок 0, 1, 2
+            if pd.isna(row[0]): continue # Пропуск пустых строк
+            
+            trigger = str(row[0]).strip()
+            
+            # Пропускаем заголовок (строку trigger;text;image)
+            if "trigger" in trigger.lower() or "image" in trigger.lower():
                 continue
-
-            # Чистим данные от пробелов
-            trigger = str(row[0]).strip() 
+                
             text = str(row[1]).strip()
             
-            # Проверка на картинку (если ячейка пустая, ставим None)
-            if pd.isna(row[2]) or str(row[2]).strip() == "":
-                image = None
-            else:
-                image = str(row[2]).strip()
+            # Обработка картинки
+            image = None
+            if len(row) > 2 and pd.notna(row[2]):
+                img_val = str(row[2]).strip()
+                if img_val.startswith("http"):
+                    image = img_val
 
-            # Записываем в базу
             data_dict[trigger] = {
                 "text": text,
                 "image": image
             }
             
         print(f"✅ Успех! Загружено {len(data_dict)} карт.")
-        # Для проверки выведем список загруженных команд в консоль
-        print(f"📜 Список команд: {list(data_dict.keys())}")
+        print(f"📜 Я вижу такие кнопки: {list(data_dict.keys())}")
         return data_dict
 
     except Exception as e:
@@ -138,4 +132,5 @@ async def main():
 if __name__ == "__main__":
 
     asyncio.run(main())
+
 
