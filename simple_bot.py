@@ -12,6 +12,13 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMar
 load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
+import os
+
+print("DEBUG ENV KEYS:", list(os.environ.keys()))
+print("DEBUG BOT_TOKEN EXISTS:", "BOT_TOKEN" in os.environ)
+print("DEBUG BOT_TOKEN VALUE:", BOT_TOKEN)
+
+
 # --- 2. ФУНКЦИЯ ЧТЕНИЯ БАЗЫ ДАННЫХ ---
 def load_data():
     print("🔄 Пытаюсь открыть файл data.csv...")
@@ -103,4 +110,5 @@ async def main():
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
+
     asyncio.run(main())
