@@ -1,3 +1,7 @@
+# Проект успешно перенесен в GitHub:
+# Проект успешно развернут на Railway: simple_bot.py
+# Версия: 2.00
+
 import asyncio
 import logging
 import pandas as pd
