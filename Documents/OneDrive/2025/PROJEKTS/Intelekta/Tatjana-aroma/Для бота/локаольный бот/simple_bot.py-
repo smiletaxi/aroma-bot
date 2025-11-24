@@ -1,0 +1,123 @@
+"""
+Простой Telegram бот с данными, хранящимися локально
+Идеально для быстрого старта!
+"""
+import asyncio
+import logging
+import os
+from aiogram import Bot, Dispatcher, Router, F, types
+from aiogram.filters import CommandStart
+from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton
+from aiogram.utils.keyboard import ReplyKeyboardBuilder
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Токен бота
+BOT_TOKEN = os.getenv("BOT_TOKEN", "YOUR_BOT_TOKEN_HERE")
+
+# Настройка логирования
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# --- Данные для бота ---
+CARD_DATA = {
+    "😊 Радость": "Ты переполнен положительной энергией! Впереди тебя ждут новые возможности и успехи. Воспользуйся этим моментом! 🌟",
+    "😴 Усталость": "Твоему телу и душе нужен отдых. Позволь себе замедлиться и восстановить силы. Забота о себе - это не эгоизм! 💤",
+    "😠 Злость": "Твоя энергия мощная, но направлена в деструктивное русло. Попробуй трансформировать эту энергию в действие. 🔥",
+    "😢 Грусть": "Твои чувства - это нормально. Позволь себе прожить этот момент, а затем отпусти его. Время лечит раны. 🌧️",
+    "😰 Тревога": "Твой ум работает над решением проблем. Возьми паузу, дыши глубоко и фокусируйся на том, что ты можешь контролировать. 🧘",
+}
+
+# Создание роутера
+router = Router()
+
+def get_keyboard():
+    """Создает клавиатуру с состояниями"""
+    builder = ReplyKeyboardBuilder()
+    for state in CARD_DATA.keys():
+        builder.add(KeyboardButton(text=state))
+    builder.adjust(2)
+    return builder.as_markup(resize_keyboard=True, one_time_keyboard=True)
+
+# --- Хэндлеры ---
+
+@router.message(CommandStart())
+async def cmd_start(message: Message):
+    """Команда /start"""
+    keyboard = get_keyboard()
+    await message.answer(
+        "🔮 Добро пожаловать! Выбери свое текущее состояние:\n\n"
+        "Я вытяну для тебя карту мудрости.",
+        reply_markup=keyboard
+    )
+
+@router.message(CommandStart())
+async def cmd_help(message: Message):
+    """Команда /help"""
+    await message.answer(
+        "ℹ️ <b>Справка:</b>\n\n"
+        "Этот бот - твой личный диагност. Просто выбери свое состояние, "
+        "и я дам тебе совет от Вселенной.\n\n"
+        "Команды:\n"
+        "/start - начать заново\n"
+        "/help - справка",
+        parse_mode="HTML"
+    )
+
+@router.message(F.text.in_(CARD_DATA.keys()))
+async def send_card(message: Message):
+    """Отправляет карту по выбранному состоянию"""
+    card_text = CARD_DATA.get(message.text)
+    
+    # Основная интерпретация
+    await message.answer(
+        f"<b>{message.text}</b>\n\n{card_text}",
+        parse_mode="HTML",
+        reply_markup=types.ReplyKeyboardRemove()
+    )
+    
+    # Пауза для драматургии
+    await asyncio.sleep(1)
+    
+    # CTA (Call to Action)
+    await message.answer(
+        "✨ Хочешь узнать больше о себе? Выбери /start для новой карты "
+        "или напиши мне что-нибудь!"
+    )
+
+@router.message()
+async def echo(message: Message):
+    """Обработка всех остальных сообщений"""
+    await message.answer(
+        "Я не совсем понял... 🤔\n\n"
+        "Пожалуйста, выбери одно из состояний или нажми /start для начала.\n"
+        "/help - для справки"
+    )
+
+# --- Главная функция ---
+
+async def main():
+    # Проверяем наличие токена
+    if BOT_TOKEN == "YOUR_BOT_TOKEN_HERE":
+        logger.error("❌ BOT_TOKEN не установлен! Укажи его в файле .env")
+        return
+    
+    logger.info("🚀 Бот запускается...")
+    
+    # Инициализируем бот и диспетчер
+    bot = Bot(token=BOT_TOKEN)
+    dp = Dispatcher()
+    dp.include_router(router)
+    
+    try:
+        # Начинаем опрашивать Telegram (polling)
+        await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
+    finally:
+        await bot.session.close()
+
+if __name__ == "__main__":
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("⏸️ Бот остановлен пользователем")
