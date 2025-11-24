@@ -1,0 +1,54 @@
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# API keys and secrets
+config/secrets.json
+secrets.yaml
+apikeys.txt
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+logs/
+*.log
+
+# Dependencies
+node_modules/
+venv/
+env/
+__pycache__/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build output
+dist/
+build/
+*.pyc
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+
+# User data
+user_data/
+cache/
+sessions/
+tokens.json
+
+# Local configuration
+config.local.json
+settings.local.yml

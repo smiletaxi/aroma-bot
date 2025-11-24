@@ -1,6 +1,7 @@
 # Telegram Bot Configuration
 # Получи токен у @BotFather в Telegram
-BOT_TOKEN=8336245561:AAEHa7hoNKZdjNOAP5dZrNHqnhrdyvj8GJA
+BOT_TOKEN=8336245561:AAHu19y1X47bLfrDsNE1SIKahHm6jLT9kWs
+
 
 
 # Google Sheets Configuration (опционально)
